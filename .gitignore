@@ -1,0 +1,28 @@
+# Dependency directories (e.g., Node, Python)
+node_modules/
+__pycache__/
+*.pyc
+
+# Environment variables and secrets (CRITICAL)
+.env
+.env.local
+*.env.json
+credentials.json
+
+# Production / Build outputs
+dist/
+build/
+out/
+*.egg-info/
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Operating System files
+.DS_Store
+Thumbs.db

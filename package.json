@@ -1,0 +1,20 @@
+{
+  "name": "j2me-web-loader",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "echo 'Build step done'",
+    "lint": "tsc --noEmit server.ts",
+    "start": "node server.ts"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

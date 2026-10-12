@@ -1,0 +1,14 @@
+Options -MultiViews
+RewriteEngine On
+
+# Redirect root to j2me folder if accessed directly
+RewriteRule ^$ j2me/ [L]
+
+# Handle clean URLs for /run without .html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^j2me/run$ j2me/run.html [L]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^run$ j2me/run.html [L]

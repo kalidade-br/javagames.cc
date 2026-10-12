@@ -1,0 +1,8 @@
+{
+  "name": "j2me-web-loader",
+  "description": "Web-based J2ME Java phone emulator using CheerpJ",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

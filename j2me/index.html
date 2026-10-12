@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-white text-slate-800">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="../j2me/logo/J2ME_icon_64x64.png">
+    <title>J2ME Web Loader</title>
+    <meta name="description" content="Web-based J2ME Java phone emulator using CheerpJ" />
+    <meta property="og:title" content="J2ME Web Loader" />
+    <meta property="og:description" content="Web-based J2ME Java phone emulator using CheerpJ" />
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              cyan: {
+                50: '#ecfeff',
+                100: '#cffafe',
+                200: '#a5f3fc',
+                300: '#67e8f9',
+                400: '#22d3ee',
+                500: '#06b6d4',
+                600: '#0891b2',
+                700: '#0e7490',
+                800: '#155e75',
+                900: '#164e63',
+              }
+            },
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+              mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'spin-slow': 'spin 8s linear infinite',
+              'float': 'float 4s ease-in-out infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-6px)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+      /* Custom styles for key buttons and seamless form toggles */
+      .checkbox-toggle:checked + .checkbox-slider {
+        background-color: #06b6d4;
+      }
+      .checkbox-toggle:checked + .checkbox-slider .checkbox-knob {
+        transform: translateX(1.25rem);
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 9999px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #a5f3fc;
+        border-radius: 9999px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #06b6d4;
+      }
+
+      @keyframes pspFloatRotate1 {
+        0% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-14px) rotate(180deg); }
+        100% { transform: translateY(0px) rotate(360deg); }
+      }
+      @keyframes pspFloatRotate2 {
+        0% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-18px) rotate(-180deg); }
+        100% { transform: translateY(0px) rotate(-360deg); }
+      }
+      @keyframes pspFloatRotate3 {
+        0% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-12px) rotate(120deg); }
+        100% { transform: translateY(0px) rotate(240deg); }
+      }
+
+      .psp-particle-1 { animation: pspFloatRotate1 12s ease-in-out infinite; }
+      .psp-particle-2 { animation: pspFloatRotate2 15s ease-in-out infinite; }
+      .psp-particle-3 { animation: pspFloatRotate3 10s ease-in-out infinite; }
+      .psp-particle-4 { animation: pspFloatRotate1 16s ease-in-out infinite; }
+      .psp-particle-5 { animation: pspFloatRotate2 11s ease-in-out infinite; }
+      .psp-particle-6 { animation: pspFloatRotate3 14s ease-in-out infinite; }
+    </style>
+  </head>
+
+  <body class="min-h-full flex flex-col bg-white text-slate-800 font-sans antialiased selection:bg-cyan-100 selection:text-cyan-900">
+
+    <!-- ANIMATED LOADING OVERLAY -->
+    <div id="loading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/95 backdrop-blur-md transition-all duration-500">
+      <div class="relative flex items-center justify-center mb-6">
+        <!-- Outer Glowing Cyan Ring -->
+        <div class="w-24 h-24 rounded-full border-4 border-cyan-100 border-t-cyan-500 animate-spin"></div>
+        <!-- Inner Reverse Spinning Pulse Ring -->
+        <div class="absolute w-16 h-16 rounded-full border-4 border-cyan-200 border-b-cyan-600 animate-[spin_1.5s_linear_infinite_reverse]"></div>
+        <!-- Central Retro Phone Icon -->
+        <div class="absolute inset-0 flex items-center justify-center text-cyan-600">
+          <svg class="w-10 h-10" viewBox="0 0 128 128">
+            <use href="../j2me/java_icon.svg"></use>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Loading Status Text -->
+      <h2 class="text-xl font-bold text-slate-800 tracking-tight mb-2">J2ME Web Loader</h2>
+      <p id="loading-status-text" class="text-sm font-medium text-cyan-700 bg-cyan-50 px-4 py-1.5 rounded-full border border-cyan-200 animate-pulse">
+        Initializing CheerpJ JVM...
+      </p>
+
+    </div>
+
+    <!-- MAIN HOME WEBSITE CONTENT -->
+    <main id="main" class="flex-grow flex flex-col min-h-screen" style="display: none">
+
+      <!-- TOP NAVIGATION BAR -->
+      <header class="sticky top-0 z-40 bg-white/60 backdrop-blur-md border-b border-cyan-100/80 shadow-sm transition-all">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          
+          <!-- Logo & Brand -->
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 overflow-hidden">
+              <img src="../j2me/logo/J2ME_icon_256x256.png" alt="J2ME Logo" class="w-10 h-10 object-contain" />
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-lg font-extrabold tracking-tight text-slate-900"><span class="text-cyan-600">J2ME </span>Web Loader</h1>
+              </div>
+              <p class="text-xs text-slate-500 hidden sm:block">Run Mobile Java (MIDP 2.0) Games in Browser</p>
+            </div>
+          </div>
+
+          <!-- Data Controls Buttons -->
+          <div class="flex items-center gap-2.5">
+            <a href="/j2me-web-loader-project.zip" download="j2me-web-loader-project.zip" title="Download entire project .ZIP to host anywhere" class="px-3 py-3 text-xs font-bold text-cyan-800 bg-cyan-100/80 hover:bg-cyan-200 border border-cyan-300/80 rounded-xl transition-all duration-200 shadow-sm flex items-center gap-1.5 cursor-pointer no-underline">
+              <svg class="w-4 h-4 text-cyan-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <span class="hidden sm:block">Download Project (.ZIP)</span>
+            </a>
+
+            <button id="import-data-btn" class="px-3 py-3 text-xs font-semibold text-slate-700 bg-white hover:bg-cyan-50 hover:text-cyan-700 border border-slate-200 hover:border-cyan-300 rounded-xl transition-all duration-200 shadow-sm flex items-center gap-1.5 cursor-pointer">
+              <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+              </svg>
+              <span class="hidden sm:block">Import Data</span>
+            </button>
+            <input type="file" id="import-data-file" style="display: none" accept=".zip" />
+
+            <button id="export-data-btn" class="px-3 py-3 text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-xl transition-all duration-200 shadow-sm shadow-cyan-500/20 flex items-center gap-1.5 cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              <span class="hidden sm:block">Export Data</span>
+            </button>
+            <a id="export-data-link" style="display: none" download="j2me-web-loader-data.zip">x</a>
+          </div>
+
+        </div>
+      </header>
+
+<!-- HERO BANNER SECTION -->
+      <section class="relative bg-gradient-to-b from-cyan-50/90 via-white to-white py-16 overflow-hidden select-none">
+        
+        <!-- PSP Floating Geometric Shapes Background (Static & Varied Sizes) -->
+        <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+          
+          <!-- Top Left Region -->
+          <div class="absolute top-4 left-[6%] psp-particle-1">
+            <svg class="w-10 h-10 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 22,20 2,20" /></svg>
+          </div>
+          <div class="absolute top-12 left-[18%] psp-particle-2" style="animation-delay: -3s;">
+            <svg class="w-5 h-5 text-cyan-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" /></svg>
+          </div>
+          <div class="absolute top-2 left-[32%] psp-particle-3" style="animation-delay: -6s;">
+            <svg class="w-7 h-7 text-cyan-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+          </div>
+
+          <!-- Mid / Center Region -->
+          <div class="absolute top-1/2 left-[3%] -translate-y-1/2 psp-particle-4" style="animation-delay: -2s;">
+            <svg class="w-12 h-12 text-cyan-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <line x1="4" y1="4" x2="20" y2="20" />
+              <line x1="20" y1="4" x2="4" y2="20" />
+            </svg>
+          </div>
+          <div class="absolute top-1/3 left-[22%] psp-particle-5" style="animation-delay: -5s;">
+            <svg class="w-8 h-8 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /></svg>
+          </div>
+          <div class="absolute bottom-4 left-[14%] psp-particle-6" style="animation-delay: -1s;">
+            <svg class="w-6 h-6 text-cyan-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 22,20 2,20" /></svg>
+          </div>
+
+          <!-- Top Right Region -->
+          <div class="absolute top-2 right-[8%] psp-particle-2" style="animation-delay: -7s;">
+            <svg class="w-11 h-11 text-cyan-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <line x1="4" y1="4" x2="20" y2="20" />
+              <line x1="20" y1="4" x2="4" y2="20" />
+            </svg>
+          </div>
+          <div class="absolute top-10 right-[22%] psp-particle-3" style="animation-delay: -2s;">
+            <svg class="w-7 h-7 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+          </div>
+          <div class="absolute top-4 right-[36%] psp-particle-1" style="animation-delay: -4s;">
+            <svg class="w-6 h-6 text-cyan-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" /></svg>
+          </div>
+
+          <!-- Bottom Right Region -->
+          <div class="absolute bottom-3 right-[5%] psp-particle-5" style="animation-delay: -8s;">
+            <svg class="w-9 h-9 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 22,20 2,20" /></svg>
+          </div>
+          <div class="absolute bottom-6 right-[18%] psp-particle-6" style="animation-delay: -3s;">
+            <svg class="w-10 h-10 text-cyan-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+          </div>
+          <div class="absolute bottom-2 right-[30%] psp-particle-4" style="animation-delay: -6s;">
+            <svg class="w-5 h-5 text-cyan-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" /></svg>
+          </div>
+
+        </div>
+
+        <!-- Hero Content -->
+        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10 flex flex-col items-center">
+          <svg class="w-12 h-12 sm:w-14 sm:h-14 text-cyan-600 mb-3 drop-shadow-sm">
+            <use href="../j2me/java_icon.svg"></use>
+          </svg>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight max-w-2xl mx-auto">
+            Classic Java Games <br/>
+            <span class="bg-gradient-to-r from-cyan-600 to-cyan-500 bg-clip-text text-transparent">Directly in Your Browser</span>
+          </h2>
+        </div>
+      </section>
+
+      <!-- MAIN APP CONTENT GRID -->
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8 flex-grow">
+
+        <!-- INSTALLED GAMES SECTION -->
+        <section class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-8">
+<div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+  <div>
+    <h2 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+      <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      Game Library
+    </h2>
+    <p class="text-xs text-slate-500 mt-0.5">Games loaded from <span class="font-mono text-cyan-700 bg-cyan-50 px-1 py-0.5 rounded border border-cyan-200">games.json</span> & installed JARs</p>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="reload-catalog-btn" title="Reload links from games.json" class="px-3 py-3 text-xs font-semibold text-slate-700 hover:text-cyan-700 bg-white hover:bg-cyan-50 border border-slate-200 hover:border-cyan-200 rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+      <span class="hidden sm:inline">Reload games.json</span>
+    </button>
+    <button id="clear-current" class="px-3 py-3 text-xs font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-xl transition-colors cursor-pointer flex items-center gap-1">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      <span class="hidden sm:inline">Add Game</span>
+    </button>
+  </div>
+</div>
+
+
+          <!-- Dynamic Game List Container -->
+          <div id="game-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 min-h-[100px]">
+            <!-- Injected dynamically by launcher.js fillGamesList -->
+          </div>
+        </section>
+
+        <!-- ADD & MANAGE GAME STUDIO SECTION -->
+        <section id="add-edit-section" class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-8">
+          <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-700 flex items-center justify-center font-bold">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <h2 id="add-edit-text" class="text-xl font-bold text-slate-900 tracking-tight">Add New Game</h2>
+                <p class="text-xs text-slate-500">Upload Java .JAR or .JAD files to install</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 1: FILE UPLOAD DROPZONE -->
+          <div id="file-input-step" class="transition-all">
+            <div class="relative border-2 border-dashed border-cyan-200 hover:border-cyan-400 bg-cyan-50/30 hover:bg-cyan-50/80 rounded-2xl p-8 text-center transition-all duration-300 group cursor-pointer">
+              <input type="file" id="game-file-input" accept=".jar" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+              <div class="space-y-3 pointer-events-none">
+                <div class="w-14 h-14 rounded-2xl bg-white border border-cyan-200 text-cyan-600 flex items-center justify-center mx-auto shadow-sm group-hover:scale-110 group-hover:border-cyan-400 transition-transform duration-300">
+                  <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-base font-bold text-slate-800">Drop your Java Game <span class="text-cyan-600 font-mono">.JAR</span> file here</p>
+                  <p class="text-xs text-slate-500 mt-1">or click anywhere to browse your files</p>
+                </div>
+                <div class="inline-block px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-mono text-slate-600 shadow-2xs">
+                  Supports MIDP 1.0 & 2.0 Java Executables
+                </div>
+              </div>
+            </div>
+
+            <!-- Download from Direct Link Input -->
+            <div class="mt-4 p-4 rounded-2xl bg-cyan-50/40 border border-cyan-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+              <div class="flex items-center gap-2 text-cyan-700 shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                <span class="text-xs font-bold whitespace-nowrap">Load from URL:</span>
+              </div>
+              <input type="url" id="game-url-input" placeholder="Paste direct .JAR link (e.g. https://.../Diamondrush-240-v1.0.1.jar)" class="flex-grow px-3.5 py-2 text-xs bg-white border border-slate-200 hover:border-cyan-300 focus:border-cyan-500 rounded-xl focus:outline-none font-mono text-slate-800" />
+              <button id="download-url-btn" type="button" class="px-4 py-2 text-xs font-bold text-white bg-cyan-600 hover:bg-cyan-700 rounded-xl transition-all shadow-xs shrink-0 flex items-center justify-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span>Download & Install</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: ANALYZING FILE LOADING -->
+          <div id="file-input-loading" class="py-12 text-center" style="display: none">
+            <div class="inline-flex items-center justify-center p-3 rounded-2xl bg-cyan-50 border border-cyan-200 mb-3">
+              <div class="w-12 h-12 border-3 border-cyan-200 border-t-cyan-600 rounded-full">
+                <img src="../j2me/logo/J2ME_icon_128x128.png" />
+              </div>
+            </div>
+            <p class="text-sm font-bold text-slate-800">Analyzing Java Game Package...</p>
+            <p class="text-xs text-slate-500 mt-1">Extracting manifest & icon metadata</p>
+          </div>
+
+          <!-- STEP 3: JAD FILE REQUIRED WARNING -->
+          <div id="file-input-jad-step" class="space-y-4" style="display: none">
+            <div id="warning-message" class="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-2xl flex items-start gap-3">
+              <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <div class="text-xs leading-relaxed">
+                <p class="font-bold">Descriptor (.JAD) File Recommended</p>
+                <p class="mt-0.5">This game requires a JAD descriptor file to parse properties accurately. Please select the matching descriptor file below.</p>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2" for="upload-descriptor-file-input">Select JAD File</label>
+              <input type="file" id="upload-descriptor-file-input" accept=".jad" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 cursor-pointer border border-slate-200 rounded-xl bg-slate-50/50 p-1" />
+            </div>
+
+            <button id="continue-without-jad" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 transition-colors cursor-pointer">
+              Continue Without JAD File
+            </button>
+          </div>
+
+          <!-- STEP 4: EDIT GAME & SETTINGS STEP -->
+          <div id="add-manage-step" class="space-y-6" style="display: none">
+            
+            <!-- Game Preview Card -->
+            <div id="preview" class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-cyan-50/50 border border-cyan-200">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-white border border-cyan-200 flex items-center justify-center p-1 overflow-hidden shrink-0 shadow-2xs">
+                  <img class="preview-icon w-full h-full object-contain" />
+                </div>
+                <div>
+                  <h3 class="preview-name font-bold text-slate-900 text-base">Game Name</h3>
+                  <span class="text-[11px] font-mono text-cyan-700 bg-cyan-100/60 px-2 py-0.5 rounded-md">Configured</span>
+                </div>
+              </div>
+
+              <div id="preview-controls" class="flex items-center gap-2">
+                <button id="wipe-data-btn" class="px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors cursor-pointer flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Wipe RMS Data
+                </button>
+                <button id="uninstall-btn" class="px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors cursor-pointer flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                  Uninstall Game
+                </button>
+              </div>
+            </div>
+
+            <!-- Settings Form Grid -->
+            <div id="edit-settings-container" class="space-y-6">
+              
+              <!-- Optional JAD Upload -->
+              <div class="relative bg-slate-50 border border-dashed border-slate-300 hover:border-cyan-400 rounded-xl p-3 text-center transition-colors">
+                <span class="text-xs font-medium text-slate-600 block">Upload Optional JAD Descriptor File</span>
+                <input type="file" id="aux-jad-file-input" accept=".jad" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              </div>
+
+              <!-- Main Grid Controls -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- Phone Type -->
+                <div class="space-y-1.5">
+                  <label for="phoneType" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Phone Device Profile</label>
+                  <select id="phoneType" class="w-full text-xs font-medium bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 shadow-2xs">
+                    <option value="Standard">Standard J2ME Device</option>
+                    <option value="Nokia">Nokia Series 40 / 60</option>
+                    <option value="Motorola">Motorola E398 / V3</option>
+                    <option value="Siemens">Siemens M65 / CX65</option>
+                    <option value="SonyEricsson">Sony Ericsson K750i / W800i</option>
+                  </select>
+                </div>
+
+                <!-- Screen Size -->
+                <div class="space-y-1.5">
+                  <label for="screenSize" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Screen Resolution</label>
+                  <select id="screenSize" class="w-full text-xs font-medium bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 shadow-2xs">
+                    <option value="96x65">96x65 (Nokia 3310 / monochrome)</option>
+                    <option value="96x96">96x96 (Square classic)</option>
+                    <option value="128x128">128x128 (Nokia Series 40 v1)</option>
+                    <option value="128x160">128x160 (Standard color phone)</option>
+                    <option value="176x208">176x208 (Nokia Symbian v1/v2)</option>
+                    <option value="176x220">176x220 (Motorola / Sony Ericsson)</option>
+                    <option value="208x208">208x208 (Square Symbian)</option>
+                    <option value="240x320" selected>240x320 (QVGA Standard - Recommended)</option>
+                    <option value="320x240">320x240 (Landscape QVGA)</option>
+                    <option value="240x400">240x400 (WQVGA Touchscreen)</option>
+                    <option value="352x416">352x416 (Nokia N80 High-res)</option>
+                    <option value="360x640">360x640 (Symbian Touch Nokia 5800)</option>
+                    <option value="480x800">480x800 (WVGA Touch)</option>
+                    <option value="custom">Custom Size...</option>
+                  </select>
+
+                  <div id="edit-custom-size-inputs" class="flex gap-2 mt-2" style="display: none">
+                    <input type="number" id="customWidth" placeholder="Width (px)" min="1" class="w-1/2 text-xs bg-white border border-slate-200 rounded-xl p-2 focus:ring-2 focus:ring-cyan-500" />
+                    <input type="number" id="customHeight" placeholder="Height (px)" min="1" class="w-1/2 text-xs bg-white border border-slate-200 rounded-xl p-2 focus:ring-2 focus:ring-cyan-500" />
+                  </div>
+                </div>
+
+                <!-- Font Size -->
+                <div class="space-y-1.5">
+                  <label for="fontSize" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">System Font Size</label>
+                  <select id="fontSize" class="w-full text-xs font-medium bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs">
+                    <option value="0">Dynamic / Auto</option>
+                    <option value="1">Small Font</option>
+                    <option value="2">Medium Font</option>
+                    <option value="3">Large Font</option>
+                  </select>
+                </div>
+
+                <!-- DirectGraphics Format -->
+                <div class="space-y-1.5">
+                  <label for="dgFormat" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">DirectGraphics Format</label>
+                  <select id="dgFormat" class="w-full text-xs font-medium bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs">
+                    <option value="444">444 RGB</option>
+                    <option value="4444">4444 ARGB</option>
+                    <option value="565" selected>565 RGB (Standard)</option>
+                    <option value="888">888 RGB</option>
+                    <option value="8888">8888 ARGB</option>
+                  </select>
+                </div>
+
+              </div>
+
+              <!-- Toggles Grid -->
+              <div class="pt-2 border-t border-slate-100">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Runtime Enhancements & Features</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs font-medium text-slate-700">
+                  
+                  <label class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-cyan-50/50 rounded-xl border border-slate-200/80 cursor-pointer transition-colors">
+                    <input type="checkbox" name="enableSound" class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500" checked />
+                    <span>Enable Sound Synthesizer</span>
+                  </label>
+
+                  <label class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-cyan-50/50 rounded-xl border border-slate-200/80 cursor-pointer transition-colors">
+                    <input type="checkbox" name="rotate" class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500" />
+                    <span>Rotate Screen 90°</span>
+                  </label>
+
+                  <label class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-cyan-50/50 rounded-xl border border-slate-200/80 cursor-pointer transition-colors">
+                    <input type="checkbox" name="forceFullscreen" class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500" />
+                    <span>Force Fullscreen View</span>
+                  </label>
+
+                  <label class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-cyan-50/50 rounded-xl border border-slate-200/80 cursor-pointer transition-colors">
+                    <input type="checkbox" name="textureDisableFilter" class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500" />
+                    <span>Crisp Pixel Art (Disable Filtering)</span>
+                  </label>
+
+                  <label class="flex items-center gap-2.5 p-2.5 bg-slate-50 hover:bg-cyan-50/50 rounded-xl border border-slate-200/80 cursor-pointer transition-colors">
+                    <input type="checkbox" name="queuedPaint" class="w-4 h-4 text-cyan-600 rounded border-slate-300 focus:ring-cyan-500" />
+                    <span>Queue Paint Events (Fix Freeze)</span>
+                  </label>
+
+                </div>
+              </div>
+
+              <!-- Advanced Settings Accordion -->
+              <details class="group pt-2">
+                <summary class="flex items-center justify-between text-xs font-bold text-slate-700 uppercase tracking-wider cursor-pointer select-none py-2 px-3 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 rounded-lg border border-slate-200 transition-colors duration-200">
+                  <span>Advanced Manifest & System Properties</span>
+                  <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </summary>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3">
+                  <div class="space-y-1">
+                    <label for="editAppProps" class="block text-[11px] font-semibold text-slate-600">App Properties (key: value)</label>
+                    <textarea id="editAppProps" placeholder="MIDlet-Vendor: Gameloft&#10;MIDlet-Version: 1.0.0" class="w-full h-24 p-2.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 custom-scrollbar"></textarea>
+                  </div>
+                  <div class="space-y-1">
+                    <label for="editSysProps" class="block text-[11px] font-semibold text-slate-600">System Properties (key: value)</label>
+                    <textarea id="editSysProps" placeholder="microedition.platform: Nokia6600&#10;j2mewebloader.keypad: standard" class="w-full h-24 p-2.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-cyan-500 custom-scrollbar"></textarea>
+                  </div>
+                </div>
+              </details>
+
+            </div>
+
+            <!-- Save Action Button -->
+            <button id="add-save-button" class="w-full py-3.5 px-6 text-sm font-bold text-white bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 rounded-2xl shadow-lg shadow-cyan-500/20 transition-all duration-200 cursor-pointer flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              <span>Add Game to Library</span>
+            </button>
+
+          </div>
+
+        </section>
+
+        <!-- KEYBOARD CONTROLS REFERENCE CARD -->
+        <section class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-4 sm:p-8">
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+  <h3 class="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+    <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"/>
+    </svg>
+    <!-- Shows shortened text on mobile, full text on tablet/desktop -->
+    <span class="sm:hidden">Keyboard Shortcuts</span>
+    <span class="hidden sm:inline">Keyboard Shortcuts & Controller Mapping</span>
+  </h3>
+  <button id="configure-desktop-keys-btn" class="px-3.5 py-3 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 font-bold rounded-xl border border-cyan-200 shadow-2xs text-xs transition-colors flex items-center gap-1.5 cursor-pointer">
+    <svg class="w-3.5 h-3.5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+    </svg>
+    <!-- Text hidden on mobile, shown on tablet/desktop -->
+    <span class="hidden sm:inline">Configure Desktop Keys</span>
+  </button>
+</div>
+
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs">
+            
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+              <span class="text-slate-500 text-[11px]">Options / Pause</span>
+              <div data-key-display="Pause" class="flex gap-1 mt-2">
+                <kbd class="px-2 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">Esc</kbd>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+              <span class="text-slate-500 text-[11px]">Left SoftKey</span>
+              <div data-key-display="LeftSoft" class="flex gap-1 mt-2">
+                <kbd class="px-2 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">F1</kbd>
+                <kbd class="px-2 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">Q</kbd>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+              <span class="text-slate-500 text-[11px]">Right SoftKey</span>
+              <div data-key-display="RightSoft" class="flex gap-1 mt-2">
+                <kbd class="px-2 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">F2</kbd>
+                <kbd class="px-2 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">W</kbd>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+              <span class="text-slate-500 text-[11px]">D-Pad Navigation</span>
+              <div class="flex gap-1 mt-2">
+                <span data-key-display="Up"><kbd class="px-1.5 py-0.5 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">↑</kbd></span>
+                <span data-key-display="Down"><kbd class="px-1.5 py-0.5 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">↓</kbd></span>
+                <span data-key-display="Left"><kbd class="px-1.5 py-0.5 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">←</kbd></span>
+                <span data-key-display="Right"><kbd class="px-1.5 py-0.5 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">→</kbd></span>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+              <span class="text-slate-500 text-[11px]">Action / Select Key</span>
+              <div data-key-display="Select" class="flex gap-1 mt-2">
+                <kbd class="px-2.5 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">Enter</kbd>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+              <span class="text-slate-500 text-[11px]">Keypad 0 - 9</span>
+              <div data-key-display="Digit5" class="flex gap-1 mt-2">
+                <kbd class="px-2 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">0-9</kbd>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+              <span class="text-slate-500 text-[11px]">Asterisk (*)</span>
+              <div data-key-display="Star" class="flex gap-1 mt-2">
+                <kbd class="px-2 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">E</kbd>
+              </div>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+              <span class="text-slate-500 text-[11px]">Pound (#)</span>
+              <div data-key-display="Pound" class="flex gap-1 mt-2">
+                <kbd class="px-2 py-1 bg-white border border-slate-300 rounded-md font-mono text-cyan-700 font-bold shadow-2xs">R</kbd>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+
+<!-- FOOTER -->
+      <footer class="bg-gradient-to-b from-white to-cyan-300/50 p-6 mt-auto border-t border-slate-100">
+        <div class="max-w-6xl mx-auto flex flex-row items-center justify-between gap-4">
+          <!-- Left side: icon then two text lines -->
+          <div class="flex items-center gap-3 text-left">
+            <img src="../j2me/logo/J2ME_icon_256x256.png" alt="J2ME Logo" class="w-10 h-10" />
+            <div class="text-xs">
+              <p class="font-bold text-slate-900">J2ME Web Loader</p>
+              <p class="text-slate-700 mt-0.5">Java MIDP 2.0 mobile phone emulation.</p>
+            </div>
+          </div>
+
+          <!-- Right side: social media icons -->
+          <div class="flex items-center gap-4">
+            <!-- Instagram -->
+            <a href="https://www.instagram.com/raj_pankaj_prajapati/" class="text-slate-800 hover:text-cyan-500 transition-colors" title="Instagram">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              </svg>
+            </a>
+            <!-- Snapchat -->
+            <a href="https://www.snapchat.com/add/raj_prajapati13" class="text-slate-800 hover:text-cyan-500 transition-colors" title="Snapchat">
+  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" id="Snapchat-Logo--Streamline-Ultimate">
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" d="M12 23.2499c-1.1717 -0.1677 -2.24011 -0.7624 -3 -1.67 -0.3282 -0.3276 -0.72995 -0.572 -1.17178 -0.7129 -0.44183 -0.1409 -0.91093 -0.1742 -1.36822 -0.0971l-0.64 0.11c-0.21793 0.043 -0.44322 0.0299 -0.65468 -0.0381 -0.21146 -0.0681 -0.40215 -0.1888 -0.55414 -0.3507 -0.15199 -0.162 -0.26029 -0.36 -0.31473 -0.5754 -0.05443 -0.2153 -0.05321 -0.441 0.00355 -0.6558 0.04973 -0.2092 0.01729 -0.4296 -0.09062 -0.6156 -0.1079 -0.186 -0.28306 -0.3236 -0.48938 -0.3844l-2 -0.41c-0.16646 -0.049 -0.31395 -0.1477 -0.42263 -0.283 -0.10868 -0.1353 -0.17335 -0.3006 -0.18533 -0.4737 -0.01197 -0.1731 0.02932 -0.3458 0.11834 -0.4947 0.08902 -0.149 0.22149 -0.2671 0.37962 -0.3386 0.91169 -0.3744 1.77465 -0.8579 2.57 -1.44 0.17671 -0.1321 0.31861 -0.3053 0.41344 -0.5046 0.09484 -0.1992 0.13977 -0.4185 0.13091 -0.639 -0.00886 -0.2205 -0.07124 -0.4356 -0.18176 -0.6266 -0.11051 -0.191 -0.26584 -0.3522 -0.45259 -0.4698l-1.23 -0.78c-0.1681 -0.1076 -0.31335 -0.2474 -0.42745 -0.4112 -0.1141 -0.1638 -0.19481 -0.3485 -0.23753 -0.5435 -0.04271 -0.195 -0.0466 -0.3965 -0.01142 -0.593 0.03517 -0.1965 0.1087 -0.38417 0.2164 -0.55226 0.23368 -0.34061 0.59002 -0.57765 0.99448 -0.66152 0.40445 -0.08388 0.82567 -0.00808 1.17552 0.21152l1.32 0.83996V6.88994c0.06398 -1.58424 0.73832 -3.08233 1.88186 -4.18062C8.9154 1.61103 10.4395 0.997681 12.025 0.997681c1.5855 0 3.1096 0.613349 4.2531 1.711639C17.4217 3.80761 18.096 5.3057 18.16 6.88994v3.18996l1.32 -0.83996c0.3498 -0.2196 0.7711 -0.2954 1.1755 -0.21152 0.4045 0.08387 0.7608 0.32091 0.9945 0.66152 0.1077 0.16809 0.1812 0.35576 0.2164 0.55226 0.0352 0.1965 0.0313 0.398 -0.0114 0.593 -0.0427 0.195 -0.1234 0.3797 -0.2375 0.5435s-0.2594 0.3036 -0.4275 0.4112l-1.23 0.78c-0.1867 0.1176 -0.3421 0.2788 -0.4526 0.4698 -0.1105 0.191 -0.1729 0.4061 -0.1817 0.6266 -0.0089 0.2205 0.036 0.4398 0.1309 0.639 0.0948 0.1993 0.2367 0.3725 0.4134 0.5046 0.7954 0.5821 1.6583 1.0656 2.57 1.44 0.1581 0.0715 0.2906 0.1896 0.3796 0.3386 0.089 0.149 0.1303 0.3216 0.1184 0.4947 -0.012 0.1731 -0.0767 0.3384 -0.1854 0.4737 -0.1087 0.1353 -0.2561 0.234 -0.4226 0.283l-2 0.41c-0.2063 0.0608 -0.3815 0.1984 -0.4894 0.3844 -0.1079 0.186 -0.1403 0.4064 -0.0906 0.6156 0.0529 0.2113 0.0524 0.4324 -0.0016 0.6433 -0.054 0.211 -0.1597 0.4052 -0.3076 0.565 -0.148 0.1598 -0.3334 0.2803 -0.5395 0.3504 -0.2062 0.0702 -0.4266 0.0878 -0.6413 0.0513l-0.64 -0.11c-0.4573 -0.0771 -0.9264 -0.0438 -1.3682 0.0971 -0.4418 0.1408 -0.8436 0.3853 -1.1718 0.7129 -0.7762 0.9323 -1.8767 1.5362 -3.08 1.69Z" stroke-width="1.5"></path>
+  </svg>
+</a>
+            <!-- Gmail -->
+<a href="mailto:rp5876907@gmail.com" class="text-slate-800 hover:text-cyan-500 transition-colors" title="Gmail">
+  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M20,18H18V9.25L12,13L6,9.25V18H4V6H5.2L12,10.25L18.8,6H20M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+  </svg>
+</a>
+            <!-- GitHub -->
+            <a href="https://github.com/rajprajapati2001" class="text-slate-800 hover:text-cyan-500 transition-colors" title="GitHub">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </footer>
+
+    </main>
+
+    <!-- CHEERPJ SCRIPTS -->
+    <script src="https://cjrtnc.leaningtech.com/4.2/loader.js"></script>
+    <script type="module" src="src/launcher.js"></script>
+  </body>
+</html>
